@@ -1,0 +1,104 @@
+.data
+str1: .string "C["
+str2: .string "]="
+str3: .string "\n"
+# s0:address of A[]
+# s1:address of B[]
+# s2:address of C[]
+# t0:i
+# t1:j
+# t2:terminate value of loopi
+# t3:terminate value of loopj
+.text
+main:
+    add s0, zero, zero   # initialize the base address of A[]
+    addi s1, s0, 20      # set the base address of B[] 
+    addi s2, s1, 20      # set the base address of C[]
+    li t0, 10            # A[] = {10,12,31,17,25} 
+    sw t0, 0(s0)         
+    li t0, 12
+    sw t0, 4(s0)
+    li t0, 31
+    sw t0, 8(s0)
+    li t0, 17
+    sw t0, 12(s0)
+    li t0, 25
+    sw t0, 16(s0)
+    li t0, 3            # B[] = {3,8,78,91,71}
+    sw t0, 0(s1)
+    li t0, 8
+    sw t0, 4(s1)
+    li t0, 78
+    sw t0, 8(s1)
+    li t0, 91
+    sw t0, 12(s1)
+    li t0, 71
+    sw t0, 16(s1)
+    addi t0, zero, 0    # i=0
+    li t2, 4
+    addi t2, t2, 1      # t2=N+1 
+
+loopi:
+    bge t0, t2, exit    # if i>=N+1, then exit loop i
+    addi t1, zero, 0    # j=0
+loopj:
+	
+    addi t3, t0, 1      # t3=i+1 
+    bge t1, t3, endi    # if j>=i+1, then exit loop j
+    beq t1, zero, then  # if j==0,then C[i] = A[j]*B[i-j]
+
+else:
+    slli t4, t1, 2      # t4=j*4
+    slli t5, t0, 2      # t5=i*4
+    sub t6, t5, t4      # t6=(i-j)*4
+    add s3, s2, t5      # s3=address of C[i]
+    add s4, s1, t6      # s4=address of B[i-j]
+    add s5, s0, t4      # s5=address of A[j]
+    lw s6, 0(s5)        # s6=A[i]
+    lw s7, 0(s4)        # s7=B[i-j]
+    lw s9, 0(s3)        # s9=C[i]
+    mul t4, s6, s7      # t4=A[i]*B[i-j]
+    add s9, s9, t4      # t5=C[i]+A[i]*B[i-j]
+    sw s9, 0(s3)        # C[i]=C[i]+A[i]*B[i-j]
+    j endj              # end of j loop
+
+then:
+    slli t4, t1, 2      # t4=j*4
+    slli t5, t0, 2      # t5=i*4
+    sub t6, t5, t4      # t6=(i-j)*4
+    add s3, s2, t5      # s3=address of C[i]
+    add s4, s1, t6      # s4=address of B[i-j]
+    add s5, s0, t4      # s5=address of A[j]
+    lw s6, 0(s5)        # s6=A[i]
+    lw s7, 0(s4)        # s7=B[i-j]
+    mul t4, s6, s7      # t4=A[i]*B[i-j]
+    sw t4, 0(s3)        # C[i]=A[i]*B[i-j]
+
+endj:
+    addi t1, t1, 1      # j = j+1
+    j loopj
+
+endi:
+    
+    la a0, str1         # print string 'C['
+    li a7, 4
+    ecall
+    mv a0, t0           # print integer i
+    li a7, 1
+    ecall
+    la a0, str2         # print string ']='
+    li a7, 4
+    ecall
+    lw s8, 0(s3)        # print integer C[i]
+    mv a0, s8
+    li a7, 1
+    ecall
+    la a0, str3         # print string '\n'
+    li a7, 4
+    ecall
+    addi t0, t0, 1      # i = i+1
+    j loopi
+    
+exit:
+    li a7, 10		 # Halts the simulator
+    ecall
